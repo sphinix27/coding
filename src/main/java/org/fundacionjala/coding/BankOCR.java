@@ -1,5 +1,8 @@
 package org.fundacionjala.coding;
 
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * Created by Zero on 16/5/2017.
  */
@@ -16,7 +19,17 @@ public class BankOCR {
     private static final String EIGHT = " _ |_||_|";
     private static final String NINE  = " _ |_| _|";
 
-    private static final String[] ALL_NUMBERS = {ZERO, ONE, TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE};
+    private static final List<Number> ALL_NUMBERS = Arrays.asList(
+                                        new Number(ZERO, 0),
+                                        new Number(ONE, 1),
+                                        new Number(TWO, 2),
+                                        new Number(THREE, 3),
+                                        new Number(FOUR, 4),
+                                        new Number(FIVE, 5),
+                                        new Number(SIX, 6),
+                                        new Number(SEVEN, 7),
+                                        new Number(EIGHT, 8),
+                                        new Number(NINE, 9));
 
     public static String convertEntryToNumber(String entry) {
         char[] charArray = entry.toCharArray();
@@ -54,13 +67,12 @@ public class BankOCR {
     }
 
     private static String getNumberValue(String string) {
-        String result = "";
-        for (int j = 0; j < ALL_NUMBERS.length; j++)
-        {
-            if(string.equals(ALL_NUMBERS[j]))
-                result = String.valueOf(j);
-        }
-        return result;
+        Number result = ALL_NUMBERS.stream()
+                .filter(number -> string.equals(number.getStringRepresentation()))
+                .findAny()
+                .orElse(null);
+
+        return String.valueOf(result.getIntValue());
     }
 
 
