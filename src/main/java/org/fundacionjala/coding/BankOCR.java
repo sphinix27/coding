@@ -6,7 +6,7 @@ import java.util.List;
 /**
  * Created by Zero on 16/5/2017.
  */
-public class BankOCR {
+public final class BankOCR {
 
     private static final String ZERO  = " _ | ||_|";
     private static final String ONE   = "     |  |";
@@ -30,42 +30,76 @@ public class BankOCR {
                                         new Number(SEVEN, 7),
                                         new Number(EIGHT, 8),
                                         new Number(NINE, 9));
+    public static final int TOTAL_CHARS = 9;
+    public static final int CHAR_LENGTH = 3;
+    public static final int FIRST_LINE_AT_ZERO = 0;
+    public static final int FIRST_LINE_AT_ONE = 1;
+    public static final int FIRST_LINE_AT_TWO = 2;
+    public static final int SECOND_LINE_AT_ZERO = 27;
+    public static final int SECOND_LINE_AT_ONE = 28;
+    public static final int SECOND_LINE_AT_TWO = 29;
+    public static final int THIRD_LINE_AT_ZERO = 54;
+    public static final int THIRD_LINE_AT_ONE = 55;
+    public static final int THIRD_LINE_AT_TWO = 56;
 
+    /**
+     *
+     */
+    private BankOCR() {
+    }
+
+    /**
+     * Read the entry.
+     * @param entry is the parameter
+     * @return String
+     */
     public static String convertEntryToNumber(String entry) {
         char[] charArray = entry.toCharArray();
 
         String[] positionNumbers = getPositionNumbers(charArray);
 
-        String result = "";
+        StringBuffer stringBuffer = new StringBuffer();
 
-        for (String string: positionNumbers)
-        {
-            result += checkString(string);
+        for (String string: positionNumbers) {
+            stringBuffer.append(checkString(string));
         }
 
-        return result;
+        return stringBuffer.toString();
     }
 
-    private static String[] getPositionNumbers(char[] charArray){
-        String[] positionNumbers = new String[9];
+    /**
+     *
+     * @param charArray parameter
+     * @return String[]
+     */
+    private static String[] getPositionNumbers(char[] charArray) {
+        String[] positionNumbers = new String[TOTAL_CHARS];
 
-        for (int i = 0; i < 9; i++)
-        {
+        for (int i = 0; i < TOTAL_CHARS; i++) {
             positionNumbers[i] = extractNumbers(charArray, i);
         }
 
         return positionNumbers;
     }
 
+    /**
+     *
+     * @param string parameter
+     * @return String
+     */
     private static String checkString(String string) {
         String result = "";
-        for (int i = 0; i < 9; i++)
-        {
+        for (int i = 0; i < TOTAL_CHARS; i++) {
             result = getNumberValue(string);
         }
         return result;
     }
 
+    /**
+     *
+     * @param string parameter
+     * @return String
+     */
     private static String getNumberValue(String string) {
         Number result = ALL_NUMBERS.stream()
                 .filter(number -> string.equals(number.getStringRepresentation()))
@@ -75,10 +109,21 @@ public class BankOCR {
         return String.valueOf(result.getIntValue());
     }
 
-
+    /**
+     *
+     * @param charArray parameter
+     * @param position parameter
+     * @return String
+     */
     private static String extractNumbers(char[] charArray, int position) {
-        return  charArray[0 + position * 3] + "" + charArray[1 + position * 3] + "" + charArray[2 + position * 3] + "" +
-                charArray[27 + position * 3] + "" + charArray[28 + position * 3] + "" + charArray[29 + position * 3] + "" +
-                charArray[54 + position * 3] + "" + charArray[55 + position * 3] + "" + charArray[56 + position * 3];
+        return  charArray[FIRST_LINE_AT_ZERO + position * CHAR_LENGTH] + ""
+                + charArray[FIRST_LINE_AT_ONE + position * CHAR_LENGTH] + ""
+                + charArray[FIRST_LINE_AT_TWO + position * CHAR_LENGTH] + ""
+                + charArray[SECOND_LINE_AT_ZERO + position * CHAR_LENGTH] + ""
+                + charArray[SECOND_LINE_AT_ONE + position * CHAR_LENGTH] + ""
+                + charArray[SECOND_LINE_AT_TWO + position * CHAR_LENGTH] + ""
+                + charArray[THIRD_LINE_AT_ZERO + position * CHAR_LENGTH] + ""
+                + charArray[THIRD_LINE_AT_ONE + position * CHAR_LENGTH] + ""
+                + charArray[THIRD_LINE_AT_TWO + position * CHAR_LENGTH];
     }
 }
