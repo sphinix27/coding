@@ -6,6 +6,8 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class SpaceInvadersTest {
 
@@ -34,9 +36,9 @@ public class SpaceInvadersTest {
     }
 
     @Test
-    public void testMove() {
-        int[][]       aliens = exampleAliens[0];
-        int[]         pos    = examplePositions[0];
-        assertEquals(new int[pos[0]][aliens[0].length], new SpaceInvaders(aliens,pos).move());
+    public void testPositionEquals() {
+        Position position = new Position(0, 0);
+        assertTrue(position.equals(new Position(0, 0)));
+        assertFalse(position.equals(new Position(1, 0)));
     }
 }

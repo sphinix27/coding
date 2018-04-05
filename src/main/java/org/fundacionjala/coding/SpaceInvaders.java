@@ -1,196 +1,112 @@
 package org.fundacionjala.coding;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class SpaceInvaders {
 
-    private int[][] aliens;
-    private int[] position;
-    private int[][] board;
-    private List<Integer> result;
-    private IBoard invaders;
+    private List<IBrick> brickList;
+    private Position ship;
+    private List<Integer> resultList;
+    private int colSize;
 
     public SpaceInvaders(int[][] aliens, int[] position) {
-        this.aliens = aliens;
-        this.position = position;
-        this.board = new int[position[0] + 1][aliens[0].length];
+        colSize = aliens[0].length;
+        this.ship = new Position(position[0], position[1]);
+        this.resultList = new ArrayList<>();
+        this.brickList = new ArrayList<>();
         for (int i = 0; i < aliens.length; i++) {
-            board[i] = this.aliens[i];
-        }
-        result = new ArrayList<>();
-
-        invaders = new Invaders();
-        for (int i = 0; i < position[0]; i++) {
-            for (int j = 0; j < aliens[0].length; j++) {
-                Position currentPos = new Position(i, j);
-                Velocity currentVel = new Velocity(0);
-                IBrick currentAlien = new Aliens(currentPos, currentVel);
-                this.invaders.addInvaders(currentAlien);
+            for (int j = 0; j < colSize; j++) {
+                if (aliens[i][j] != 0) {
+                    IBrick invaderBrick = new InvaderBrick(new Position(i, j));
+                    ISpaceShip spaceShip = new SpaceShip(Math.abs(aliens[i][j]), aliens[i][j] > 0);
+                    invaderBrick.addSpaceShip(spaceShip);
+                    brickList.add(invaderBrick);
+                }
             }
         }
-        for (int i = 0; i < aliens.length; i++) {
-            for (int j = 0; j < aliens[0].length; j++) {
-                Position currentPos = new Position(i,j);
-                Velocity currentVel = new Velocity(aliens[i][j]);
-                IBrick currentAlien = new Aliens(currentPos, currentVel);
-                invaders.
-            }
-        }
-
     }
 
     public List<Integer> blastSequence() {
-        for (int i = 0; i < position[0] * aliens[0].length; i++) {
+        int turn = 0;
+        boolean gameOver;
+        do {
             move();
-            if (shoot()) {
-                result.add(i);
-            }
-        }
-        return result;
+            shoot(turn);
+            turn++;
+            gameOver = brickList.stream().anyMatch(t -> t.getPosition().getRow() == ship.getRow());
+        } while (!gameOver && brickList.size() != 0);
+        return resultList;
     }
 
-    public boolean shoot() {
-
-        for (int i = position[0]; i > 0; i--) {
-            if (board[i][position[1]] != 0) {
-                board[i][position[1]] = 0;
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public int[][] move() {
-        int columnLength = aliens[0].length;
-        int[][] newAliens = new int[position[0] + 1][columnLength];
-        for (int i = 0; i < position[0]; i++) {
-            for (int j = 0; j < columnLength; j++) {
-                int squareToMove = Math.abs(board[i][j]);
-                boolean sideToMove = board[i][j] > 0;
-                boolean boardNotZero = board[i][j] != 0;
-                if (sideToMove && boardNotZero && (squareToMove + j) < columnLength) {
-                    newAliens[i][squareToMove + j] = board[i][j];
+    public void move() {
+        List<IBrick> newBrickList = new ArrayList<>();
+        brickList.forEach(brick -> {
+            Position currentPosition = brick.getPosition();
+            List<ISpaceShip> currentSpaceShipList = brick.getSpaceShips();
+            currentSpaceShipList.forEach(spaceShips -> {
+                Direction currentDirection = spaceShips.getDirection();
+                MovementSpeed currentMovementSpeed = spaceShips.getMovementSpeed();
+                int moveRight = currentPosition.getColumn() + currentMovementSpeed.getMovementSpeed();
+                int moveLeft = currentPosition.getColumn() - currentMovementSpeed.getMovementSpeed();
+                Position newPosition = new Position();
+                Direction newDirection = new Direction();
+                if (currentDirection.isDirection() && (moveRight < colSize)) {
+                    newPosition = new Position(currentPosition.getRow(), moveRight);
+                    newDirection = currentDirection;
                 }
-                if (!sideToMove && boardNotZero && (j - squareToMove) >= 0) {
-                    newAliens[i][j - squareToMove] = board[i][j];
+                if (!currentDirection.isDirection() && (moveLeft >= 0)) {
+                    newPosition = new Position(currentPosition.getRow(), moveLeft);
+                    newDirection = currentDirection;
                 }
-                if (sideToMove && boardNotZero && (squareToMove + j) >= columnLength) {
-                    int remainSquares = squareToMove + j - columnLength;
-                    newAliens[i + 1][columnLength - remainSquares - 1] = (-1) * board[i][j];
+                if (currentDirection.isDirection() && (moveRight >= colSize)) {
+                    int remainSquares = moveRight - (colSize - 1);
+                    newPosition = new Position(currentPosition.getRow() + 1, colSize - remainSquares);
+                    newDirection = new Direction(!currentDirection.isDirection());
                 }
-                if (!sideToMove && boardNotZero && (j - squareToMove) < 0) {
-                    int remainSquares = Math.abs(j - squareToMove);
-                    newAliens[i + 1][remainSquares - 1] = (-1) * board[i][j];
+                if (!currentDirection.isDirection() && (moveLeft < 0)) {
+                    int remainSquares = Math.abs(moveLeft);
+                    newPosition = new Position(currentPosition.getRow() + 1, remainSquares - 1);
+                    newDirection = new Direction(!currentDirection.isDirection());
+                }
+                ISpaceShip spaceShip = new SpaceShip(currentMovementSpeed, newDirection);
+                Position finalNewPosition = newPosition;
+                if (newBrickList.stream().anyMatch(t -> t.getPosition().equals(finalNewPosition))) {
+                    newBrickList.stream().filter(t -> t.getPosition().equals(finalNewPosition)).findFirst().get()
+                            .addSpaceShip(spaceShip);
+                } else {
+                    IBrick invaderBrick = new InvaderBrick(newPosition);
+                    invaderBrick.addSpaceShip(spaceShip);
+                    newBrickList.add(invaderBrick);
+                }
+            });
+        });
+        brickList = newBrickList;
+    }
+
+    private void shoot(int turn) {
+        Comparator<IBrick> comparator = Comparator.comparingInt(p -> p.getPosition().getRow());
+        IBrick brick = brickList.stream().filter(t -> t.getPosition().getColumn() == ship.getColumn())
+                .max(comparator)
+                .orElseGet(EmptyBrick::new);
+        if (brick.getSpaceShips().size() > 0) {
+            if (brick.getSpaceShips().size() == 1) {
+                brickList.remove(brick);
+            } else {
+                Comparator<ISpaceShip> comp = Comparator.comparingInt(p -> p.getMovementSpeed().getMovementSpeed());
+                int maxMovementSpeed = brick.getSpaceShips().stream().max(comp).get().getMovementSpeed()
+                        .getMovementSpeed();
+                List<ISpaceShip> spaceShipList = brick.getSpaceShips().stream().filter(t -> t.getMovementSpeed()
+                        .getMovementSpeed() == maxMovementSpeed).collect(Collectors.toList());
+                if (spaceShipList.size() == 1) {
+                    brick.getSpaceShips().remove(spaceShipList.get(0));
+                } else {
+                    ISpaceShip spaceship = spaceShipList.stream().filter(t -> t.getDirection().isDirection())
+                            .findFirst().get();
+                    brick.getSpaceShips().remove(spaceship);
                 }
             }
-        }
-        board = newAliens;
-        return board;
-    }
-
-    public interface IBrick {
-        Position getPosition();
-
-        void setPosition(int i, int j);
-
-        Velocity getVelocity();
-
-        void setVelocity(int speed);
-    }
-
-    private static class Position {
-        private int row;
-        private int column;
-
-        public Position(int row, int column) {
-            this.row = row;
-            this.column = column;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            boolean rowCheck = false;
-            boolean colCheck = false;
-            if (o instanceof Position) {
-                Position cuPos = (Position)o;
-                rowCheck = cuPos.row == row;
-                colCheck =  cuPos.column ==column;
-            }
-            return rowCheck && colCheck;
-        }
-    }
-
-    private static class Velocity {
-        private int speed;
-        private boolean direction;
-
-        public Velocity(int speed) {
-            this.speed = Math.abs(speed);
-            this.direction = speed > 0;
-        }
-    }
-
-    private static class Aliens implements IBrick {
-        private Position pos;
-        private Velocity vel;
-
-        public Aliens(Position pos, Velocity vel) {
-            this.pos = pos;
-            this.vel = vel;
-        }
-
-        @Override
-        public Position getPosition() {
-            return pos;
-        }
-
-        @Override
-        public void setPosition(int i, int j) {
-            pos = new Position(i, j);
-        }
-
-        @Override
-        public Velocity getVelocity() {
-            return vel;
-        }
-
-        @Override
-        public void setVelocity(int speed) {
-            vel = new Velocity(speed);
-        }        
-    }
-
-    public interface IBoard {
-        List<IBrick> getInvaders();
-
-        void addInvaders(IBrick alien);
-
-        void setInvader(IBrick alien);
-    }
-
-    private static class Invaders implements IBoard {
-        private List<IBrick> aliens;
-
-        @Override
-        public List<IBrick> getInvaders() {
-            return aliens;
-        }
-
-        public IBrick getInvader(Position pos) {
-            return aliens.stream().filter(t -> t.getPosition().equals(pos)).findFirst().get();
-        }
-
-        @Override
-        public void addInvaders(IBrick alien) {
-            aliens.add(alien);
-        }
-
-        @Override
-        public void setInvader(IBrick alien) {
-            int index = aliens.indexOf(getInvader(alien.getPosition()));
-            aliens.remove(index);
-            aliens.add(index, alien);
+            resultList.add(turn);
         }
     }
 }
